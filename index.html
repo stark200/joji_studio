@@ -2,31 +2,51 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Joji Studio | DoniPrint</title>
+  <title>Site</title>
   <style>
     html, body {
       margin: 0;
       padding: 0;
-      overflow: hidden;
       height: 100%;
+      overflow: hidden;
     }
 
-    #fullscreenIframe {
-      position: fixed;
-      top: 0;
-      left: 0;
+    #output {
       width: 100vw;
       height: 100vh;
-      border: none;
-      z-index: 9999;
+      overflow: auto;
     }
   </style>
 </head>
 <body>
-  <iframe 
-    id="fullscreenIframe"
-    src="https://doniprint.ru/"
-    allowfullscreen
-  ></iframe>
+  <div id="output">Загрузка сайта...</div>
+
+  <script>
+    fetch(`https://api.allorigins.win/get?url=${encodeURIComponent('https://doniprint.ru/')}`)
+      .then(response => {
+        if (response.ok) return response.json();
+        throw new Error('Network response was not ok.');
+      })
+      .then(data => {
+        // Добавляем <base> для корректной загрузки CSS, JS и картинок
+        const contentWithBase = `<base href="https://doniprint.ru/">` + data.contents;
+        document.getElementById('output').innerHTML = contentWithBase;
+
+        // Исполняем встроенные скрипты (иначе не сработают)
+        const scripts = document.querySelectorAll('#output script');
+        scripts.forEach(oldScript => {
+          const newScript = document.createElement('script');
+          if (oldScript.src) {
+            newScript.src = oldScript.src;
+          } else {
+            newScript.textContent = oldScript.textContent;
+          }
+          document.body.appendChild(newScript);
+        });
+      })
+      .catch(err => {
+        document.getElementById('output').innerText = 'Ошибка загрузки: ' + err;
+      });
+  </script>
 </body>
 </html>
